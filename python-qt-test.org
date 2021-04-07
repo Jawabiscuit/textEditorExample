@@ -1,0 +1,18 @@
+#+TITLE: Python Qt Test
+
+Python Qt Challenge
+
+Thank you for your application to the Motion R&D Department at Weta Digital. We look forward to getting to know you better!
+
+Below is a simple code challenge. What we'd like to see is how you solve problems and deliver solutions in the real world. What do you believe is important to include for a production solution? Give us a sense of your skill, style and polish!
+
+It's okay if you make assumptions, but tell us what your assumptions are and why they make sense.
+
+This is a practice task to assess one's comfort with PyQt or Pyside. The goal is a standalone, GUI application which can be launched from the command line. Your application should:
+
+1. Include a menu bar menu offering one or more actions
+2. Include a widget for the user to enter text with a 140 character limit
+3. Include a control to modify the text style, eg. the font or color
+4. Display to the user how many characters have been typed
+5. Offer a status bar
+6. Remember one or more aspects of the GUI's state between sessions (eg. geometry) and restore to this state after a relaunch
