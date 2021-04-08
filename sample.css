@@ -1,0 +1,281 @@
+QWidget
+{
+    color: #ddd;
+    alternate-background-color: #303030;
+    selection-background-color: #4167b0;
+    selection-color: #fff;
+    font-family: Liberation Sans, Nimbus Sans L, Source Sans Pro, Sans Serif, sans, sans-serif;
+    font-size: 10pt;
+    font-weight: normal;
+}
+
+#SampleWindow
+{
+    background-color: #444;
+}
+
+QGroupBox
+{
+    border: 1px solid #666;
+    border-radius: 3px;
+    font-weight: bold;
+    font-size: 12px;
+    /* leave space at the top for the title */
+    padding: 6px 0 0 0;
+    margin: 6px 0 0 0;
+}
+
+QGroupBox::title
+{
+    subcontrol-origin: margin;
+    left: 8px;
+    top: -1px;
+    margin: 0;
+    padding: 0 6px;
+    color: #999;
+}
+
+QLineEdit
+{
+    color: #ddd;
+    background-color: #303030;
+    /* a hidden borer ensures the size does not change when the focus state changes */
+    border: 1px solid #303030;
+    selection-background-color: #4167b0;
+    selection-color: white;
+    border-radius: 3px;
+    margin: 0;
+    padding: 0 0 0 2px;
+}
+
+QLineEdit:disabled
+{
+    color: #666;
+}
+
+QLineEdit:hover
+{
+    background-color: #333;
+}
+
+QLineEdit:focus
+{
+    border: 1px solid #4167b0;
+}
+
+QComboBox
+{
+    color: #ddd;
+    background-color: #303030;
+    /* a hidden borer ensures the size does not change when the focus state changes */
+    border: 1px solid #303030;
+    border-radius: 3px;
+    margin: 0;
+    padding: 0 0 0 6px;
+
+    /* This hack is needed to get "setMaxVisibleItems" to work. Unable to determine significance. */
+    combobox-popup: 0;
+}
+
+QComboBox:disabled
+{
+    color: #666;
+}
+
+QComboBox:hover
+{
+    background-color: #333;
+}
+
+QComboBox:focus
+{
+    border: 1px solid #4167b0;
+}
+
+QComboBox:editable
+{
+    padding-left: 0;
+}
+
+QComboBox::drop-down
+{
+    background: transparent;
+    subcontrol-origin: padding;
+    subcontrol-position: top right;
+    width: 20px;
+
+    /* same radius as the QComboBox */
+    border-top-right-radius: 3px;
+    border-bottom-right-radius: 3px;
+}
+
+QComboBox::down-arrow
+{
+    image: url(:mdl/18x18/arrow_drop_down.png);
+}
+
+QComboBox::down-arrow:disabled
+{
+    image: none;
+}
+
+QComboBox::down-arrow:on
+{
+    /* shift the arrow when popup is open */
+    top: 1px;
+    left: 1px;
+}
+
+QComboBox QListView
+{
+    border: none;
+    color: #fff;
+    background-color: #222;
+    padding: 0;
+    selection-background-color: #4167b0;
+}
+
+QComboBox QListView::disabled
+{
+    color: #666;
+}
+
+QComboBox::item:disabled
+{
+    color: #666;
+}
+
+QCheckBox
+{
+    color: #ddd;
+}
+
+QCheckBox:hover
+{
+    color: #fff;
+}
+
+QCheckBox::indicator
+{
+    width: 18px;
+    height: 18px;
+}
+
+QCheckBox::indicator::unchecked
+{
+    image: url(:mdl/24x24/check_box_outline_blank.png);
+}
+
+QCheckBox::indicator::checked
+{
+    image: url(:mdl/24x24/check_box.png);
+}
+
+QCheckBox:disabled
+{
+    color: #666;
+}
+
+QCheckBox::indicator::checked:disabled
+{
+    image: url(:mdl/24x24/check_box_disabled.png);
+}
+
+QCheckBox::indicator::unchecked:disabled
+{
+    image: url(:mdl/24x24/check_box_outline_blank_disabled.png);
+}
+
+QPushButton
+{
+    background-color: #303030;
+    color: #ccc;
+    border: none;
+    border-radius: 3px;
+
+    padding: 6px 12px;
+    margin: 0;
+}
+
+QPushButton:disabled
+{
+    color: #666;
+}
+
+QPushButton:focus
+{
+    border: 1px solid #4167b0;
+    /* reduce padding to ensure text area is not reduced */
+    padding: 5px 11px;
+}
+
+QPushButton:hover
+{
+    background-color: #333;
+    color: #fff;
+}
+
+QLabel
+{
+    color: #ddd;
+    background: transparent;
+}
+
+QLabel:disabled
+{
+    color: #666;
+}
+
+QScrollArea
+{
+    background: transparent;
+}
+
+QScrollBar:vertical
+{
+    border: none;
+    background-color: #222;
+    width: 10px;
+    margin: 0;
+}
+
+QScrollBar::handle:vertical
+{
+    background-color: #303030;
+    min-height: 0;
+    border: 1px solid #666;
+}
+
+QScrollBar::handle:vertical:hover
+{
+    background-color: #333;
+}
+
+QScrollBar::add-line:vertical
+{
+    border: none;
+    background: none;
+    height: 0;
+    subcontrol-position: bottom;
+    subcontrol-origin: margin;
+}
+
+QScrollBar::sub-line:vertical
+{
+    border: none;
+    background: none;
+    height: 0;
+    subcontrol-position: top;
+    subcontrol-origin: margin;
+}
+
+#ErrorWidget
+{
+    color: #faa;
+    background-color: #411;
+}
+
+QLineEdit[hasError=true] {
+    color: #fda;
+    background-color: #431;
+}
