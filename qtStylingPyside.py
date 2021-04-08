@@ -2,7 +2,10 @@
 import os
 import sys
 
-from PySide2.QtCore import QResource
+from PySide2.QtCore import (
+    QResource,
+    Signal,
+)
 
 from PySide2.QtWidgets import (
     QApplication,
@@ -10,6 +13,7 @@ from PySide2.QtWidgets import (
     QGroupBox,
     QPushButton,
     QVBoxLayout,
+    QTextEdit,
 )
 
 
@@ -91,30 +95,65 @@ class QssWidget(DefaultWidget):
             return fh.read()
 
 
-if __name__ == "__main__":
-    from collections import deque
+class PreviewWidget(QWidget):
 
-    # Style to window type map
-    styleMap = dict(
-        default=DefaultWidget,
-        qss=QssWidget,
-    )
+    def __init__(self, parent=None):
+        super(PreviewWidget, self).__init__(parent)
+
+        self.textEdit = QTextEdit()
+        self.textEdit.setReadOnly(True)
+        self.textEdit.setLineWrapMode(QTextEdit.NoWrap)
+
+        closeButton = QPushButton("&Close")
+        closeButton.clicked.connect(self.close)
+
+        layout = QVBoxLayout()
+        layout.addWidget(self.textEdit)
+        layout.addWidget(closeButton)
+        self.setLayout(layout)
+
+        self.setWindowTitle("Preview")
+
+
+class ControllerWidget(QWidget):
+
+    _WidgetType = DefaultWidget
+    _previewWidget = None
+
+    def __init__(self):
+        super(ControllerWidget, self).__init__()
+
+        widget = ControllerWidget._previewWidget = \
+            ControllerWidget._WidgetType.init()
+        widget.show()
+
+        previewButton = QPushButton("&Preview")
+        quitButton = QPushButton("&Quit")
+
+        layout = QVBoxLayout(self)
+        layout.addWidget(previewButton)
+        layout.addWidget(quitButton)
+        layout.addStretch()
+
+        previewButton.clicked.connect(self.onPreviewClicked)
+        quitButton.clicked.connect(self.close)
+
+    def onPreviewClicked(self):
+        widget = ControllerWidget._previewWidget
+        new = ControllerWidget._previewWidget = \
+            ControllerWidget._WidgetType.init()
+        new.show()
+
+        widget.close()
+
+    def closeEvent(self, event):
+        ControllerWidget._previewWidget.deleteLater()
+        event.accept()
+
+
+if __name__ == "__main__":
     _app = QApplication(sys.argv)
 
-    # Process the arguments
-    mode = "qss"
-    args = deque(sys.argv[1:])
-    error = "Provide a styling mode from the list: [{}]".format(
-        ", ".join(sorted(styleMap.keys())))
-
-    if args:
-        mode = args.popleft()
-    else:
-        print(error)
-    uiType = styleMap.get(mode, False)
-    if not uiType:
-        raise RuntimeError(error)
-
-    ui = uiType.init(args)
+    ui = ControllerWidget()
     ui.show()
     _app.exec_()
