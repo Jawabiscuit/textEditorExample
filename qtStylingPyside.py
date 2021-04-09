@@ -14,6 +14,7 @@ from PySide2.QtWidgets import (
     QPushButton,
     QVBoxLayout,
     QTextEdit,
+    QComboBox,
 )
 
 
@@ -34,7 +35,7 @@ class DefaultWidget(QWidget):
         """
         Initialize style that will be used across the application
         """
-        pass
+        QApplication.instance().setStyleSheet("")
 
     @classmethod
     def getStyleSheet(cls):
@@ -75,8 +76,7 @@ class QssWidget(DefaultWidget):
         """
         QApplication.instance().setStyleSheet(cls.getStyleSheet())
 
-    @classmethod
-    def initInstanceStyle(cls, *args):
+    def initInstanceStyle(self, *args):
         """
         Initialize style that will be applied to this instance
         """
@@ -120,6 +120,9 @@ class ControllerWidget(QWidget):
     _WidgetType = DefaultWidget
     _previewWidget = None
 
+    widget_type_map = dict(default=DefaultWidget,
+                           qss=QssWidget,)
+
     def __init__(self):
         super(ControllerWidget, self).__init__()
 
@@ -127,10 +130,14 @@ class ControllerWidget(QWidget):
             ControllerWidget._WidgetType.init()
         widget.show()
 
+        self.styleCombo = styleCombo = QComboBox()
         previewButton = QPushButton("&Preview")
         quitButton = QPushButton("&Quit")
 
+        styleCombo.addItems(["default", "qss"])
+
         layout = QVBoxLayout(self)
+        layout.addWidget(styleCombo)
         layout.addWidget(previewButton)
         layout.addWidget(quitButton)
         layout.addStretch()
@@ -140,8 +147,10 @@ class ControllerWidget(QWidget):
 
     def onPreviewClicked(self):
         widget = ControllerWidget._previewWidget
-        new = ControllerWidget._previewWidget = \
-            ControllerWidget._WidgetType.init()
+        uiSelection = self.styleCombo.currentText()
+        uiType = self.widget_type_map.get(uiSelection)
+        ControllerWidget._WidgetType = uiType
+        new = ControllerWidget._previewWidget = uiType.init()
         new.show()
 
         widget.close()

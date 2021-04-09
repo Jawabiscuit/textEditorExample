@@ -16,3 +16,19 @@ This is a practice task to assess one's comfort with PyQt or Pyside. The goal is
 4. Display to the user how many characters have been typed
 5. Offer a status bar
 6. Remember one or more aspects of the GUI's state between sessions (eg. geometry) and restore to this state after a relaunch
+
+
+* Font
+
+[[https://doc.qt.io/qt-5/qapplication.html#setFont][QApplication::setFont()]]
+
+#+begin_quote
+[static]void QApplication::setFont(const QFont &font, const char *className = nullptr)
+Changes the default application font to font. If className is passed, the change applies only to classes that inherit className (as reported by QObject::inherits()).
+
+On application start-up, the default font depends on the window system. It can vary depending on both the window system version and the locale. This function lets you override the default font; but overriding may be a bad idea because, for example, some locales need extra large fonts to support their special characters.
+
+Warning: Do not use this function in conjunction with Qt Style Sheets. The font of an application can be customized using the "font" style sheet property. To set a bold font for all QPushButtons, set the application styleSheet() as "QPushButton { font: bold }"
+
+See also font(), fontMetrics(), and QWidget::setFont().
+#+end_quote
