@@ -13,7 +13,7 @@ from PySide2.QtWidgets import (
     QGroupBox,
     QPushButton,
     QVBoxLayout,
-    QTextEdit,
+    QLineEdit,
     QComboBox,
 )
 
@@ -21,9 +21,13 @@ from PySide2.QtWidgets import (
 class DefaultWidget(QWidget):
     """Default widget with no style mods"""
 
+    button = None
+    line = None
+    combo = None
+
     @classmethod
     def init(cls, *args):
-        cls.initGlobalStyle(args)
+        cls.initGlobalStyle(*args)
         widget = cls()
         widget.setWindowTitle(cls.__name__)
         widget.initUi()
@@ -31,7 +35,7 @@ class DefaultWidget(QWidget):
         return widget
 
     @classmethod
-    def initGlobalStyle(cls, args):
+    def initGlobalStyle(cls, *args):
         """
         Initialize style that will be used across the application
         """
@@ -50,17 +54,31 @@ class DefaultWidget(QWidget):
         """
         pass
 
+    def setInstanceStyle(self, *args):
+        """
+        Set style applied to this instance in a running application
+        """
+        pass
+
     def initUi(self):
         self.setObjectName(self.__class__.__name__)
-        button = QPushButton("Button", self)
-        group = QGroupBox('Group', self)
+
+        self.button = button = QPushButton("Button", self)
+        group = QGroupBox("Group", self)
+        self.line = line = QLineEdit("Demo text.", self)
+        self.combo = combo = QComboBox(self)
+        for i in '123':
+            combo.addItem('Choice ' + i)
 
         widgets = [
             button,
+            line,
+            combo,
         ]
         innerLayout = QVBoxLayout(group)
         for widget in widgets:
             innerLayout.addWidget(widget)
+            innerLayout.addWidget(combo)
         innerLayout.addStretch()
 
         layout = QVBoxLayout(self)
@@ -80,7 +98,26 @@ class QssWidget(DefaultWidget):
         """
         Initialize style that will be applied to this instance
         """
-        pass
+        if "error" in args:
+            self.line.setProperty('hasError', True)
+            self.combo.setObjectName('ErrorWidget')
+            self.button.setObjectName('ErrorWidget')
+
+    def setInstanceStyle(self, *args):
+        """
+        Set style applied to this instance in a running application
+        """
+        widgets = [
+            self.line, self.combo, self.button,
+        ]
+        if "error" in args:
+            self.line.setProperty('hasError', True)
+            self.combo.setObjectName('ErrorWidget')
+            self.button.setObjectName('ErrorWidget')
+
+            for widget in widgets:
+                widget.style().unpolish(widget)
+                widget.style().polish(widget)
 
     @classmethod
     def getStyleSheet(cls):
@@ -112,17 +149,27 @@ class ControllerWidget(QWidget):
 
         self.styleCombo = styleCombo = QComboBox()
         setButton = QPushButton("&Set")
+        errorButton = QPushButton("Error")
         quitButton = QPushButton("&Quit")
+
+        setButton.setToolTip(
+            "Apply the style selected in the drop-down")
+        errorButton.setToolTip(
+            "Apply styling to individual widgets indicating an error")
+        quitButton.setToolTip(
+            "Quit the application")
 
         styleCombo.addItems(["default", "qss"])
 
         layout = QVBoxLayout(self)
         layout.addWidget(styleCombo)
         layout.addWidget(setButton)
+        layout.addWidget(errorButton)
         layout.addWidget(quitButton)
         layout.addStretch()
 
         setButton.clicked.connect(self.onSetClicked)
+        errorButton.clicked.connect(self.onErrorClicked)
         quitButton.clicked.connect(self.close)
 
     def onSetClicked(self):
@@ -132,12 +179,15 @@ class ControllerWidget(QWidget):
         ControllerWidget._WidgetType = uiType
         new = ControllerWidget._demoWidget = uiType.init()
         new.show()
-
         widget.close()
 
     def closeEvent(self, event):
         ControllerWidget._demoWidget.deleteLater()
         event.accept()
+
+    def onErrorClicked(self):
+        widget = ControllerWidget._demoWidget
+        widget.setInstanceStyle("error")
 
 
 if __name__ == "__main__":
