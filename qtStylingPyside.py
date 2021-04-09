@@ -2,10 +2,13 @@
 import os
 import sys
 
+from time import sleep
+
 from PySide2.QtCore import (
     Qt,
     QResource,
     Signal,
+    QTimer,
 )
 
 from PySide2.QtGui import (
@@ -28,6 +31,7 @@ from PySide2.QtWidgets import (
     QStyleFactory,
     QStyleOptionComboBox,
     QStylePainter,
+    QProgressBar,
 )
 
 
@@ -37,6 +41,8 @@ class DefaultWidget(QWidget):
     button = None
     line = None
     combo = None
+    timer = None
+    progress = None
 
     ComboBoxType = QComboBox
 
@@ -86,20 +92,39 @@ class DefaultWidget(QWidget):
         self.combo = combo = self.ComboBoxType(self)
         for i in '123':
             combo.addItem('Choice ' + i)
+        self.progress = progress = self.createProgressBar()
 
         widgets = [
             button,
             line,
             combo,
+            progress,
         ]
         innerLayout = QVBoxLayout(group)
         for widget in widgets:
             innerLayout.addWidget(widget)
-            innerLayout.addWidget(combo)
         innerLayout.addStretch()
 
         layout = QVBoxLayout(self)
         layout.addWidget(group)
+
+    def createProgressBar(self):
+        progressBar = QProgressBar()
+        progressBar.setRange(0, 1000)
+        progressBar.setValue(0)
+
+        self.timer = timer = QTimer(self)
+        timer.timeout.connect(self.advanceProgressBar)
+        timer.start(100)
+
+        return progressBar
+
+    def advanceProgressBar(self):
+        curVal = self.progress.value()
+        maxVal = self.progress.maximum()
+        self.progress.setValue((curVal + (maxVal - curVal) / 10) + 9)
+        if self.progress.value() == 1000:
+            self.timer.stop()
 
 
 class PaletteWidget(DefaultWidget):
@@ -335,6 +360,8 @@ class ControllerWidget(QWidget):
 
     def __init__(self):
         super(ControllerWidget, self).__init__()
+
+        self.setWindowTitle(self.__class__.__name__)
 
         widget = ControllerWidget._demoWidget = \
             ControllerWidget._WidgetType.init()
