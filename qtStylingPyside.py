@@ -23,6 +23,7 @@ from PySide2.QtWidgets import (
     QLineEdit,
     QComboBox,
     QStyle,
+    QStyleFactory,
 )
 
 
@@ -130,6 +131,48 @@ class PaletteWidget(DefaultWidget):
         palette.setColor(QPalette.AlternateBase, Qt.red)
         self.button.setPalette(palette)
         self.line.setPalette(palette)
+
+
+class StyleWidget(DefaultWidget):
+    """
+    A widget that customizes its appearance by changing style factories
+
+    .. note::
+
+        Doesn't work in Windows, windows disappear and app exits quietly.
+
+        Tried setting style as early as possible, before app construction,
+        and still application quits.
+    """
+
+    @classmethod
+    def initGlobalStyle(cls, *args):
+        """
+        Initialize style that will be used across the application
+
+        .. note::
+
+            A limited set of pre-defined styles are available
+
+            If desired it is possible to create a completely custom style, see
+            the links below...
+
+            Best left for major application creation in C++,
+            not recommended for Python
+
+            https://doc.qt.io/qt-5/qstyle.html#creating-a-custom-style
+            https://doc.qt.io/qt-5/qstyleplugin.html
+            https://doc.qt.io/qt-5/qstylefactory.html
+
+        """
+        print("\n\nAvailable styles: " + ", ".join(
+            sorted(QStyleFactory.keys())))
+        style = "Fusion"
+        for arg in args:
+            if arg.lower() in [k.lower() for k in QStyleFactory.keys()]:
+                style = arg
+        style = QStyleFactory.create(style)
+        QApplication.instance().setStyle(style)
 
 
 class QssWidget(DefaultWidget):
