@@ -123,7 +123,13 @@ class PaletteWidget(DefaultWidget):
         """
         Initialize style that will be applied to this instance
         """
-        pass
+        palette = QPalette(self.palette())
+        palette.setColor(QPalette.Button, Qt.darkRed)
+        palette.setColor(QPalette.ButtonText, Qt.red)
+        palette.setColor(QPalette.Base, Qt.darkRed)
+        palette.setColor(QPalette.AlternateBase, Qt.red)
+        self.button.setPalette(palette)
+        self.line.setPalette(palette)
 
 
 class QssWidget(DefaultWidget):
