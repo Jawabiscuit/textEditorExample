@@ -95,30 +95,10 @@ class QssWidget(DefaultWidget):
             return fh.read()
 
 
-class PreviewWidget(QWidget):
-
-    def __init__(self, parent=None):
-        super(PreviewWidget, self).__init__(parent)
-
-        self.textEdit = QTextEdit()
-        self.textEdit.setReadOnly(True)
-        self.textEdit.setLineWrapMode(QTextEdit.NoWrap)
-
-        closeButton = QPushButton("&Close")
-        closeButton.clicked.connect(self.close)
-
-        layout = QVBoxLayout()
-        layout.addWidget(self.textEdit)
-        layout.addWidget(closeButton)
-        self.setLayout(layout)
-
-        self.setWindowTitle("Preview")
-
-
 class ControllerWidget(QWidget):
 
     _WidgetType = DefaultWidget
-    _previewWidget = None
+    _demoWidget = None
 
     widget_type_map = dict(default=DefaultWidget,
                            qss=QssWidget,)
@@ -126,37 +106,37 @@ class ControllerWidget(QWidget):
     def __init__(self):
         super(ControllerWidget, self).__init__()
 
-        widget = ControllerWidget._previewWidget = \
+        widget = ControllerWidget._demoWidget = \
             ControllerWidget._WidgetType.init()
         widget.show()
 
         self.styleCombo = styleCombo = QComboBox()
-        previewButton = QPushButton("&Preview")
+        setButton = QPushButton("&Set")
         quitButton = QPushButton("&Quit")
 
         styleCombo.addItems(["default", "qss"])
 
         layout = QVBoxLayout(self)
         layout.addWidget(styleCombo)
-        layout.addWidget(previewButton)
+        layout.addWidget(setButton)
         layout.addWidget(quitButton)
         layout.addStretch()
 
-        previewButton.clicked.connect(self.onPreviewClicked)
+        setButton.clicked.connect(self.onSetClicked)
         quitButton.clicked.connect(self.close)
 
-    def onPreviewClicked(self):
-        widget = ControllerWidget._previewWidget
+    def onSetClicked(self):
+        widget = ControllerWidget._demoWidget
         uiSelection = self.styleCombo.currentText()
         uiType = self.widget_type_map.get(uiSelection)
         ControllerWidget._WidgetType = uiType
-        new = ControllerWidget._previewWidget = uiType.init()
+        new = ControllerWidget._demoWidget = uiType.init()
         new.show()
 
         widget.close()
 
     def closeEvent(self, event):
-        ControllerWidget._previewWidget.deleteLater()
+        ControllerWidget._demoWidget.deleteLater()
         event.accept()
 
 
