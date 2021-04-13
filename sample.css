@@ -1,6 +1,6 @@
 QWidget
 {
-    color: #ddd;
+    color: #dddddd;
     alternate-background-color: #303030;
     selection-background-color: #4167b0;
     selection-color: #fff;
@@ -9,7 +9,7 @@ QWidget
     font-weight: normal;
 }
 
-#SampleWindow
+#MainWindow
 {
     background-color: #444;
 }

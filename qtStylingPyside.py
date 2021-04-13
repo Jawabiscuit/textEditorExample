@@ -36,6 +36,7 @@ from PySide2.QtWidgets import (
     QPlainTextEdit,
     QFileDialog,
     QAction,
+    QCheckBox,
 )
 
 
@@ -433,6 +434,10 @@ class MainWindow(QMainWindow):
     saveAction = None
     saveAsAction = None
     closeAction = None
+    prefsMenu = None
+    themeMenu = None
+    darkAction = None
+    lightAction = None
     helpMenu = None
     aboutAction = None
 
@@ -449,10 +454,16 @@ class MainWindow(QMainWindow):
         """
         Initialize style that will be used across the application
         """
+        QApplication.instance().setStyleSheet("")
+        QApplication.instance().setPalette(
+            QApplication.style().standardPalette())
+
+    @classmethod
+    def setDarkTheme(cls):
+        """
+        Switch UI to a dark theme
+        """
         QApplication.instance().setStyleSheet(getStyleSheet())
-        # For the purposes of demo'ing If a palette has been applied previously
-        # as well as reset back to standard, simply running setStyleSheet() will
-        # unexpectedly re-apply palette settings!
         QApplication.instance().setPalette(
             QApplication.style().standardPalette())
 
@@ -461,11 +472,13 @@ class MainWindow(QMainWindow):
         self._filePath = None
 
     def initUi(self):
+        self.setObjectName(self.__class__.__name__)
         self.text = text = QPlainTextEdit()
         self.setCentralWidget(text)
         self.addMenus()
         self.addActions()
         self.connectSignals()
+        self.statusBar().showMessage("Ready")
 
     def initWindowStyle(self, *args):
         """
@@ -489,6 +502,8 @@ class MainWindow(QMainWindow):
 
     def addMenus(self):
         self.fileMenu = self.menuBar().addMenu("&File")
+        self.prefsMenu = self.menuBar().addMenu("&Prefs")
+        self.themeMenu = self.prefsMenu.addMenu("Theme")
         self.helpMenu = self.menuBar().addMenu("&Help")
 
     def addActions(self):
@@ -500,30 +515,32 @@ class MainWindow(QMainWindow):
         saveAsAction.setShortcut(QKeySequence.SaveAs)
         self.closeAction = closeAction = QAction("&Close", self)
         closeAction.setShortcut(QKeySequence.Close)
-
-        actions = [
+        self.fileMenu.addActions([
             openAction,
             saveAction,
             saveAsAction,
             closeAction,
-        ]
-        for action in actions:
-            self.fileMenu.addAction(action)
+        ])
+        
+        self.darkAction = darkAction = QAction("Dark", self) 
+        self.lightAction = lightAction = QAction("Light", self)
+        self.themeMenu.addActions([
+            darkAction, lightAction,
+        ])
 
         self.aboutAction = aboutAction = QAction("&About", self)
         aboutAction.setShortcut(QKeySequence.WhatsThis)
-
-        actions = [
+        self.helpMenu.addActions([
             aboutAction,
-        ]
-        for action in actions:
-            self.helpMenu.addAction(action)
+        ])
 
     def connectSignals(self):
         self.openAction.triggered.connect(self.openFile)
         self.saveAction.triggered.connect(self.save)
         self.saveAsAction.triggered.connect(self.saveAs)
         self.closeAction.triggered.connect(self.close)
+        self.darkAction.triggered.connect(self.setDarkTheme)
+        self.lightAction.triggered.connect(self.initGlobalStyle)
         self.aboutAction.triggered.connect(self.about)
 
     def closeEvent(self, event):
