@@ -440,6 +440,7 @@ class MainWindow(QMainWindow):
     lightAction = None
     helpMenu = None
     aboutAction = None
+    aboutQtAction = None
 
     @classmethod
     def init(cls, *args):
@@ -520,7 +521,7 @@ class MainWindow(QMainWindow):
             saveAction,
             saveAsAction,
             closeAction,
-        ])
+        ])  
         
         self.darkAction = darkAction = QAction("Dark", self) 
         self.lightAction = lightAction = QAction("Light", self)
@@ -530,8 +531,10 @@ class MainWindow(QMainWindow):
 
         self.aboutAction = aboutAction = QAction("&About", self)
         aboutAction.setShortcut(QKeySequence.WhatsThis)
+        self.aboutQtAction = aboutQtAction = QAction("About &Qt", self)
         self.helpMenu.addActions([
             aboutAction,
+            aboutQtAction,
         ])
 
     def connectSignals(self):
@@ -542,6 +545,7 @@ class MainWindow(QMainWindow):
         self.darkAction.triggered.connect(self.setDarkTheme)
         self.lightAction.triggered.connect(self.initGlobalStyle)
         self.aboutAction.triggered.connect(self.about)
+        self.aboutQtAction.triggered.connect(QApplication.instance().aboutQt)
 
     def closeEvent(self, event):
         if not self.text.document().isModified():
