@@ -16,6 +16,8 @@ from PySide2.QtGui import (
     QPen,
     QPainter,
     QKeySequence,
+    QTextCharFormat,
+    QTextCursor,
 )
 
 from PySide2.QtWidgets import (
@@ -37,6 +39,8 @@ from PySide2.QtWidgets import (
     QFileDialog,
     QAction,
     QCheckBox,
+    QToolBar,
+    QFontComboBox,
 )
 
 
@@ -441,6 +445,7 @@ class MainWindow(QMainWindow):
     helpMenu = None
     aboutAction = None
     aboutQtAction = None
+    fontCombo = None
 
     @classmethod
     def init(cls, *args):
@@ -478,6 +483,8 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(text)
         self.addMenus()
         self.addActions()
+        self.addFileToolBar()
+        self.addTextToolBar()
         self.connectSignals()
         self.statusBar().showMessage("Ready")
 
@@ -537,6 +544,27 @@ class MainWindow(QMainWindow):
             aboutQtAction,
         ])
 
+    def addFileToolBar(self):
+        tb = QToolBar()
+        tb.setWindowTitle("File Actions")
+        tb.addActions([
+            self.openAction,
+            self.saveAction,
+            self.closeAction,
+        ])
+        self.addToolBar(tb)
+    
+    def addTextToolBar(self):
+        tb = QToolBar()
+        tb.setWindowTitle("Text Actions")
+        self.fontCombo = fontCombo = QFontComboBox(tb)
+        tb.addWidget(self.fontCombo)
+        self.addToolBar(tb)
+
+        font = self.font()
+        fontCombo.setFont(font)
+        fontCombo.setCurrentFont(font)
+
     def connectSignals(self):
         self.openAction.triggered.connect(self.openFile)
         self.saveAction.triggered.connect(self.save)
@@ -546,6 +574,7 @@ class MainWindow(QMainWindow):
         self.lightAction.triggered.connect(self.initGlobalStyle)
         self.aboutAction.triggered.connect(self.about)
         self.aboutQtAction.triggered.connect(QApplication.instance().aboutQt)
+        self.fontCombo.currentFontChanged.connect(self.currentFontChanged)
 
     def closeEvent(self, event):
         if not self.text.document().isModified():
@@ -578,6 +607,19 @@ class MainWindow(QMainWindow):
         filePath = QFileDialog.getOpenFileName(self, "Open")[0]
         if filePath:
             self.text.setPlainText(open(filePath).read())
+
+    def currentFontChanged(self, font):
+        fmt = QTextCharFormat()
+        family = font.family()
+        fmt.setFontFamily(family)
+        self.mergeFormatOnWordOrSelection(fmt)
+
+    def mergeFormatOnWordOrSelection(self, fmt):
+        cursor = self.text.textCursor()
+        if not cursor.hasSelection():
+            cursor.select(QTextCursor.WordUnderCursor)
+        cursor.mergeCharFormat(fmt)
+        self.text.mergeCurrentCharFormat(fmt)
 
     def about(self):
         text = (
