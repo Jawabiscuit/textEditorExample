@@ -609,6 +609,7 @@ class MainWindow(QMainWindow):
     def initUi(self):
         """Construct a new UI instance"""
         self.setObjectName(self.__class__.__name__)
+        self.setWindowTitle(self.toolName())
         self.text = text = QPlainTextEdit()
         self.setCentralWidget(text)
         self.addMenus()
