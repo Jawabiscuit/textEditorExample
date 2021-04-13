@@ -2,12 +2,10 @@
 import os
 import sys
 
-from time import sleep
-
 from PySide2.QtCore import (
     Qt,
     QResource,
-    Signal,
+    # Signal,
     QTimer,
 )
 
@@ -17,6 +15,7 @@ from PySide2.QtGui import (
     QBrush,
     QPen,
     QPainter,
+    QKeySequence,
 )
 
 from PySide2.QtWidgets import (
@@ -32,7 +31,15 @@ from PySide2.QtWidgets import (
     QStyleOptionComboBox,
     QStylePainter,
     QProgressBar,
+    QMainWindow,
+    QMessageBox,
+    QPlainTextEdit,
+    QFileDialog,
+    QAction,
 )
+
+
+__version__ = "0.0.1"
 
 
 class DefaultWidget(QWidget):
@@ -419,9 +426,155 @@ class ControllerWidget(QWidget):
         widget.setGlobalStyle()
 
 
+class MainWindow(QMainWindow):
+    text = None
+    fileMenu = None
+    openAction = None
+    saveAction = None
+    saveAsAction = None
+    closeAction = None
+    helpMenu = None
+    aboutAction = None
+
+    @classmethod
+    def init(cls, *args):
+        cls.initGlobalStyle(*args)
+        window = cls()
+        window.initUi()
+        window.initWindowStyle(*args)
+        return window
+
+    @classmethod
+    def initGlobalStyle(cls, *args):
+        """
+        Initialize style that will be used across the application
+        """
+        QApplication.instance().setStyleSheet(getStyleSheet())
+        # For the purposes of demo'ing If a palette has been applied previously
+        # as well as reset back to standard, simply running setStyleSheet() will
+        # unexpectedly re-apply palette settings!
+        QApplication.instance().setPalette(
+            QApplication.style().standardPalette())
+
+    def __init__(self):
+        super(MainWindow, self).__init__()
+        self._filePath = None
+
+    def initUi(self):
+        self.text = text = QPlainTextEdit()
+        self.setCentralWidget(text)
+        self.addMenus()
+        self.addActions()
+        self.connectSignals()
+
+    def initWindowStyle(self, *args):
+        """
+        Initialize style that will be applied to this instance
+        """
+        if "error" in args:
+            self.text.setProperty('hasError', True)
+
+    def setWindowStyle(self, *args):
+        """
+        Set style applied to this instance in a running application
+        """
+        widgets = [
+            self.text,
+        ]
+        if "error" in args:
+            self.text.setProperty('hasError', True)
+            for widget in widgets:
+                widget.style().unpolish(widget)
+                widget.style().polish(widget)
+
+    def addMenus(self):
+        self.fileMenu = self.menuBar().addMenu("&File")
+        self.helpMenu = self.menuBar().addMenu("&Help")
+
+    def addActions(self):
+        self.openAction = openAction = QAction("&Open", self)
+        openAction.setShortcut(QKeySequence.Open)
+        self.saveAction = saveAction = QAction("&Save", self)
+        saveAction.setShortcut(QKeySequence.Save)
+        self.saveAsAction = saveAsAction = QAction("Save &As...", self)
+        saveAsAction.setShortcut(QKeySequence.SaveAs)
+        self.closeAction = closeAction = QAction("&Close", self)
+        closeAction.setShortcut(QKeySequence.Close)
+
+        actions = [
+            openAction,
+            saveAction,
+            saveAsAction,
+            closeAction,
+        ]
+        for action in actions:
+            self.fileMenu.addAction(action)
+
+        self.aboutAction = aboutAction = QAction("&About", self)
+        aboutAction.setShortcut(QKeySequence.WhatsThis)
+
+        actions = [
+            aboutAction,
+        ]
+        for action in actions:
+            self.helpMenu.addAction(action)
+
+    def connectSignals(self):
+        self.openAction.triggered.connect(self.openFile)
+        self.saveAction.triggered.connect(self.save)
+        self.saveAsAction.triggered.connect(self.saveAs)
+        self.closeAction.triggered.connect(self.close)
+        self.aboutAction.triggered.connect(self.about)
+
+    def closeEvent(self, event):
+        if not self.text.document().isModified():
+            return
+        answer = QMessageBox.question(
+            self, None,
+            "You have unsaved changes. Save before closing?",
+            QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel
+        )
+        if answer & QMessageBox.Save:
+            self.save()
+        elif answer & QMessageBox.Cancel:
+            event.ignore()
+
+    def save(self):
+        if self._filePath is None:
+            self.saveAs()
+        else:
+            with open(self._filePath, "w") as f:
+                f.write(self.text.toPlainText())
+            self.text.document().setModified(False)
+
+    def saveAs(self):
+        filePath = QFileDialog.getSaveFileName(self, "Save As")[0]
+        if filePath:
+            self._filePath = filePath
+            self.save()
+
+    def openFile(self):
+        filePath = QFileDialog.getOpenFileName(self, "Open")[0]
+        if filePath:
+            self.text.setPlainText(open(filePath).read())
+
+    def about(self):
+        text = (
+            "<center>"
+            "<h1>Text Editor</h1>"
+            "&#8291;"
+            "<img src=icon.svg>"
+            "</center>"
+            "<p>Version {}<br/>"
+            "Copyright &copy; Company Inc.</p>".format(__version__))
+        QMessageBox.about(self, "About Text Editor", text)
+
+
 if __name__ == "__main__":
     _app = QApplication(sys.argv)
+    _app.setStyle("Fusion")
 
-    ui = ControllerWidget()
+    # ui = ControllerWidget()
+    ui = MainWindow.init()
     ui.show()
     _app.exec_()
