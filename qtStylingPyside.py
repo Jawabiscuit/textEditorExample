@@ -1,12 +1,17 @@
 #! /bin/env python
 import os
 import sys
+import pickle
 
 from PySide2.QtCore import (
     Qt,
     QResource,
     # Signal,
     QTimer,
+    QSettings,
+    QSize,
+    QPoint,
+    QByteArray,
 )
 
 from PySide2.QtGui import (
@@ -431,6 +436,114 @@ class ControllerWidget(QWidget):
         widget.setGlobalStyle()
 
 
+class WindowSettings(object):
+    """
+    Persistent user settings
+
+    Window class must implement specific methods for settings to work.
+
+    Override::
+
+        def saveState(self):
+            '''Re-implement to collect internal data to save'''
+            return {}
+
+        def restoreState(self, data):
+            '''Re-implement to load saved internal data'''
+            pass
+    """
+
+    def __init__(self,
+                 widget,
+                 companyName,
+                 toolName,
+                 toolVersion):
+        self.widget = widget
+        self.companyName = companyName
+        self.toolName = toolName
+        self.toolVersion = toolVersion
+
+    def readSettings(self):
+        settings = QSettings(self.companyName, self.toolName)
+
+        settings.beginGroup(str(self.toolVersion))
+        self.widget.resize(settings.value("size", QSize(400, 200)))
+        self.widget.move(settings.value("pos", QPoint(200, 200)))
+
+        errors = []
+
+        if hasattr(self.widget, "restoreState"):
+            settings.beginGroup("widgetState")
+            string = settings.value("state", QByteArray('(dp0\n.)'))
+            if string:
+                try:
+                    state = pickle.loads(string)
+                    self.widget.restoreState(state)
+                except:
+                    import traceback
+                    errors.append(traceback.format_exc())
+            # end widgetState
+            settings.endGroup()
+        # end toolVersion
+        settings.endGroup()
+
+        if errors:
+            print(errors[-1])
+            return False
+
+        return True
+
+    def writeSettings(self):
+        settings = QSettings(self.companyName, self.toolName)
+
+        settings.beginGroup('{}'.format(self.toolVersion))
+        settings.setValue("size", self.widget.size())
+        settings.setValue("pos", self.widget.pos())
+
+        errors = []
+        if hasattr(self.widget, "saveState"):
+            settings.beginGroup("widgetState")
+
+            try:
+                state = pickle.dumps(self.widget.saveState())
+            except:
+                import traceback
+                errors.append(traceback.format_exc())
+            else:
+                settings.setValue("state", QByteArray(state))
+
+            # end widgetState
+            settings.endGroup()
+
+        # end toolVersion
+        settings.endGroup()
+
+        if errors:
+            print(errors[-1])
+            return False
+
+        return True
+
+    def clearSettings(self):
+        settings = QSettings(self.companyName, self.toolName)
+        settings.clear()
+
+    def save(self):
+        result = self.writeSettings()
+        self.widget.close()
+        return result
+
+    def restore(self):
+        self.widget.restoreState({})
+        self.widget.close()
+        self.clearSettings()
+        print("Settings cleared")
+
+    def cancel(self):
+        self.widget.close()
+        self.readSettings()
+
+
 class MainWindow(QMainWindow):
     text = None
     fileMenu = None
@@ -451,6 +564,7 @@ class MainWindow(QMainWindow):
     def init(cls, *args):
         cls.initGlobalStyle(*args)
         window = cls()
+        window.setToolName("TextEditExample")
         window.initUi()
         window.initWindowStyle(*args)
         return window
@@ -473,6 +587,15 @@ class MainWindow(QMainWindow):
         QApplication.instance().setPalette(
             QApplication.style().standardPalette())
 
+    @classmethod
+    def setToolName(cls, value):
+        cls.ToolName = value or cls.__name__
+
+    @classmethod
+    def toolName(cls):
+        """Tool name for config and settings"""
+        return getattr(cls, "ToolName", cls.__name__)
+
     def __init__(self):
         super(MainWindow, self).__init__()
         self._filePath = None
@@ -485,8 +608,19 @@ class MainWindow(QMainWindow):
         self.addActions()
         self.addFileToolBar()
         self.addTextToolBar()
+        self.settings = WindowSettings(
+            self, "XYZ-Company", self.toolName(), __version__)
+        self.settings.readSettings()
         self.connectSignals()
         self.statusBar().showMessage("Ready")
+
+    def saveState(self):
+        """Collect internal data to save"""
+        return {}
+
+    def restoreState(self, data):
+        """Load saved internal data"""
+        pass
 
     def initWindowStyle(self, *args):
         """
@@ -528,8 +662,8 @@ class MainWindow(QMainWindow):
             saveAction,
             saveAsAction,
             closeAction,
-        ])  
-        
+        ])
+
         self.darkAction = darkAction = QAction("Dark", self) 
         self.lightAction = lightAction = QAction("Light", self)
         self.themeMenu.addActions([
@@ -553,7 +687,7 @@ class MainWindow(QMainWindow):
             self.closeAction,
         ])
         self.addToolBar(tb)
-    
+
     def addTextToolBar(self):
         tb = QToolBar()
         tb.setWindowTitle("Text Actions")
@@ -575,6 +709,7 @@ class MainWindow(QMainWindow):
         self.aboutAction.triggered.connect(self.about)
         self.aboutQtAction.triggered.connect(QApplication.instance().aboutQt)
         self.fontCombo.currentFontChanged.connect(self.currentFontChanged)
+        QApplication.instance().aboutToQuit.connect(self.settings.save)
 
     def closeEvent(self, event):
         if not self.text.document().isModified():
