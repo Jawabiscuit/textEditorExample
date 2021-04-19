@@ -151,7 +151,7 @@ class WindowSettings(object):
         self.widget.restoreState({})
         self.widget.close()
         self.clearSettings()
-        print("Settings cleared")
+        # print("Settings cleared")
 
     def cancel(self):
         self.widget.close()
@@ -214,6 +214,8 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super(MainWindow, self).__init__()
         self._filePath = None
+        self._recentFiles = []
+        self._maxNumRecentFiles = 4
 
     def initUi(self):
         """Construct a new UI instance"""
@@ -262,6 +264,7 @@ class MainWindow(QMainWindow):
     def addMenus(self):
         """Create all menus"""
         self.fileMenu = self.menuBar().addMenu("&File")
+        self.recentFilesMenu = self.fileMenu.addMenu("Open Recent")
         self.prefsMenu = self.menuBar().addMenu("&Prefs")
         self.themeMenu = self.prefsMenu.addMenu("Theme")
         self.helpMenu = self.menuBar().addMenu("&Help")
@@ -282,6 +285,13 @@ class MainWindow(QMainWindow):
             saveAsAction,
             closeAction,
         ])
+
+        self.recentFileActions = []
+        for _ in range(self._maxNumRecentFiles):
+            recentFileAction = QAction(self)
+            recentFileAction.setVisible(False)
+            self.recentFileActions.append(recentFileAction)
+        self.recentFilesMenu.addActions(self.recentFileActions)
 
         self.darkAction = darkAction = QAction("Dark", self)
         self.lightAction = lightAction = QAction("Light", self)
@@ -326,6 +336,8 @@ class MainWindow(QMainWindow):
         self.saveAction.triggered.connect(self.save)
         self.saveAsAction.triggered.connect(self.saveAs)
         self.closeAction.triggered.connect(self.close)
+        for recentfAction in self.recentFileActions:
+            recentfAction.triggered.connect(self.openRecent)
         self.darkAction.triggered.connect(self.setDarkTheme)
         self.lightAction.triggered.connect(self.initGlobalStyle)
         self.aboutAction.triggered.connect(self.about)
@@ -366,8 +378,56 @@ class MainWindow(QMainWindow):
     def openFile(self):
         """Insert text into text edit from contents of a file on disk"""
         filePath = QFileDialog.getOpenFileName(self, "Open")[0]
+        self._loadFile(filePath)
+
+    def openRecent(self):
+        """Open the most recently edited file"""
+        action = self.sender()
+        if action:
+            self._loadFile(action.data())
+
+    def _loadFile(self, filePath):
+        if not os.path.isfile(filePath):
+            QMessageBox.warning(
+                self,
+                "Could not open file.\n"
+                "File path does not exist: {}".format(filePath),
+            )
+            return
         if filePath:
             self.text.setPlainText(open(filePath).read())
+        self._updateCurrentFile(filePath)
+
+    def _updateCurrentFile(self, filePath):
+        """Update UI with new file information"""
+        self._filePath = filePath
+
+        while filePath in self._recentFiles:
+            self._recentFiles.remove(filePath)
+        self._recentFiles.insert(0, self._filePath)
+
+        if len(self._recentFiles) > self._maxNumRecentFiles:
+            self._recentFiles = self._recentFiles[:self._maxNumRecentFiles]
+
+        self._updateRecentFileActions()
+
+    def _updateRecentFileActions(self):
+        """Update the recent files list"""
+        recentFiles = self._recentFiles
+        if len(recentFiles) <= self._maxNumRecentFiles:
+            itEnd = len(recentFiles)
+        else:
+            itEnd = self._maxNumRecentFiles
+
+        for i, recentFile in enumerate(recentFiles):
+            action = self.recentFileActions[i]
+            action.setText(os.path.basename(recentFile))
+            action.setData(recentFile)
+            action.setVisible(True)
+
+        for ii, action in enumerate(self.recentFileActions):
+            if ii > itEnd:
+                action.setVisible(False)
 
     def currentFontChanged(self, font):
         """Do when font is changed using the font combo"""
