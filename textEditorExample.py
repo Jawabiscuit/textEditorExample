@@ -367,6 +367,7 @@ class MainWindow(QMainWindow):
             with open(self._filePath, "w") as f:
                 f.write(self.text.toPlainText())
             self.text.document().setModified(False)
+            self._updateCurrentFile()
 
     def saveAs(self):
         """Save the text to disk, file name not previously stored"""
@@ -387,20 +388,34 @@ class MainWindow(QMainWindow):
             self._loadFile(action.data())
 
     def _loadFile(self, filePath):
+        if filePath is None:
+            return
         if not os.path.isfile(filePath):
             QMessageBox.warning(
                 self,
+                "File Missing",
                 "Could not open file.\n"
                 "File path does not exist: {}".format(filePath),
             )
+            self._removeRecentFile(filePath)
             return
         if filePath:
             self.text.setPlainText(open(filePath).read())
+
         self._updateCurrentFile(filePath)
 
-    def _updateCurrentFile(self, filePath):
+    def _removeRecentFile(self, filePath):
+        """Remove a file from the recent file list"""
+        while filePath in self._recentFiles:
+            self._recentFiles.remove(filePath)
+        self._updateRecentFileActions()
+
+    def _updateCurrentFile(self, filePath=None):
         """Update UI with new file information"""
-        self._filePath = filePath
+        if filePath:
+            self._filePath = filePath
+        else:
+            filePath = self._filePath
 
         while filePath in self._recentFiles:
             self._recentFiles.remove(filePath)
@@ -409,17 +424,35 @@ class MainWindow(QMainWindow):
         if len(self._recentFiles) > self._maxNumRecentFiles:
             self._recentFiles = self._recentFiles[:self._maxNumRecentFiles]
 
+        self.setWindowFilePath(filePath)
+        self.setWindowTitle(filePath)
+
         self._updateRecentFileActions()
 
     def _updateRecentFileActions(self):
         """Update the recent files list"""
-        recentFiles = self._recentFiles
-        if len(recentFiles) <= self._maxNumRecentFiles:
-            itEnd = len(recentFiles)
+        if len(self._recentFiles) <= self._maxNumRecentFiles:
+            itEnd = len(self._recentFiles)
         else:
             itEnd = self._maxNumRecentFiles
 
-        for i, recentFile in enumerate(recentFiles):
+        # Clean removed entries
+        unusedActions = []
+        for recentfAction in self.recentFileActions:
+            filePath = recentfAction.data()
+            if (filePath is not None
+            and filePath not in self._recentFiles):
+                recentfAction.setText("")
+                recentfAction.setData(None)
+                recentfAction.setVisible(False)
+                unusedActions.append(recentfAction)
+
+        # Rotate unused actions to the end of the list
+        for unusedAction in unusedActions:
+            actions = self.recentFileActions
+            actions.append(actions.pop(actions.index(unusedAction)))
+
+        for i, recentFile in enumerate(self._recentFiles):
             action = self.recentFileActions[i]
             action.setText(os.path.basename(recentFile))
             action.setData(recentFile)
